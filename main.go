@@ -73,6 +73,9 @@ func main() {
 	mux.HandleFunc("/product/{slug}", productHandler(db))
 	mux.HandleFunc("/add-to-cart", addToCartHandler(db))
 	mux.HandleFunc("/cart", cartHandler(db))
+	mux.HandleFunc("/admin/products", adminProductsHandler(db))
+	mux.HandleFunc("/admin/products/{id}", adminEditProductHandler(db))
+	mux.HandleFunc("/admin/delete-product", adminDeleteProductHandler(db))
 	mux.HandleFunc("/admin/new-product", adminNewProductHandler(db))
 	mux.HandleFunc("/", homeHandler(db))
 

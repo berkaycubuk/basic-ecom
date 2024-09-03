@@ -34,6 +34,7 @@ func addToCartHandler(db *sql.DB) http.HandlerFunc {
 			fmt.Fprintf(w, "Only POST method supported for this route.")
 			return
 		}
+
 		if err := req.ParseForm(); err != nil {
 			fmt.Fprintf(w, "ERROR: %v", err)
 			return
@@ -129,6 +130,122 @@ func productHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+func adminProductsHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		rows, err := db.Query("SELECT id, name, price FROM products")
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		var products []Product
+
+		for rows.Next() {
+			var product Product
+
+			err = rows.Scan(&product.ID, &product.Name, &product.Price)
+			if err != nil {
+				fmt.Fprintf(w, err.Error())
+				continue
+			}
+
+			products = append(products, product)
+		}
+
+		rows.Close()
+
+		tmpl := template.Must(template.ParseFiles("./views/admin/products.html"))
+		tmpl.Execute(w, products)
+	}
+}
+
+func adminEditProductHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if req.Method == "GET" {
+			idParameter := req.PathValue("id")
+
+			if idParameter == "" {
+				http.NotFound(w, req)
+				return
+			}
+
+			var product Product
+
+			err := db.QueryRow("SELECT * FROM products WHERE id = ?", idParameter).Scan(&product.ID, &product.Name, &product.Slug, &product.Price)
+			if err != nil {
+				http.NotFound(w, req)
+				return
+			}
+
+			tmpl := template.Must(template.ParseFiles("./views/admin/layout.html", "./views/admin/edit-product.html"))
+			tmpl.Execute(w, product)
+		} else if req.Method == "POST" {
+			if err := req.ParseForm(); err != nil {
+				fmt.Fprintf(w, "ERROR: %v", err)
+				return
+			}
+
+			id := req.FormValue("id")
+			name := req.FormValue("name")
+			slug := req.FormValue("slug")
+			price := req.FormValue("price")
+
+			err := db.QueryRow("SELECT id FROM products WHERE id = ?", id).Scan(&id)
+			if err != nil {
+				http.NotFound(w, req)
+				return
+			}
+
+			stmt, err := db.Prepare("UPDATE products set name = ?, slug = ?, price = ? where id = ?")
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+
+			_, err = stmt.Exec(name, slug, price, id)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+
+			http.Redirect(w, req, "/admin/products/" + id, http.StatusFound)
+		} else {
+			fmt.Fprintf(w, "Only GET and POST methods are supported.")
+			return
+		}
+	}
+}
+
+func adminDeleteProductHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		if req.Method != "POST" {
+			http.NotFound(w, req)
+			return
+		}
+
+		if err := req.ParseForm(); err != nil {
+			fmt.Fprintf(w, "ERROR: %v", err)
+			return
+		}
+
+		productId := req.FormValue("id")
+
+		stmt, err := db.Prepare("DELETE FROM products WHERE id = ?")
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		_, err = stmt.Exec(productId)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+
+		http.Redirect(w, req, "/admin/products", http.StatusFound)
+	}
+}
+
 func adminNewProductHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method == "GET" {
@@ -161,7 +278,7 @@ func adminNewProductHandler(db *sql.DB) http.HandlerFunc {
 				return
 			}
 
-			http.Redirect(w, req, "/product/" + slug, http.StatusFound)
+			http.Redirect(w, req, "/admin/products", http.StatusFound)
 		} else {
 			fmt.Fprintf(w, "Only GET and POST methods are supported.")
 		}
