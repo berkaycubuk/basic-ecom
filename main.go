@@ -77,6 +77,7 @@ func main() {
 	mux.HandleFunc("/admin/products/{id}", adminEditProductHandler(db))
 	mux.HandleFunc("/admin/delete-product", adminDeleteProductHandler(db))
 	mux.HandleFunc("/admin/new-product", adminNewProductHandler(db))
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./public"))))
 	mux.HandleFunc("/", homeHandler(db))
 
 	log.Println("Server started on port 8090")

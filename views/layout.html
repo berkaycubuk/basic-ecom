@@ -2,16 +2,20 @@
 	<head>
 		<meta charset="UTF-8" />
 		<title>Basic E-com</title>
+
+		<link rel="stylesheet" type="text/css" href="/static/core.css" />
 	</head>
 	<body>
-		<div>
+		<div class="container">
 			<header>
-				<div>Basic E-com</div>
+				<a href="/" class="header-logo">Basic E-com</a>
 				<nav>
 					<a href="/cart">Cart</a>
 				</nav>
 			</header>
+			<main>
 			{{block "main" .}}{{end}}
+			</main>
 			<footer>
 			</footer>
 		</div>

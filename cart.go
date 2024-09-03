@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 )
@@ -75,10 +76,12 @@ func cartHandler(db *sql.DB) http.HandlerFunc {
 			}
 
 			cartItems = append(cartItems, cartItem)
-
-			fmt.Fprintf(w, "id: %d, product_id: %d, count: %d\n", cartItem.ID, cartItem.ProductID, cartItem.ProductCount)
+			// TODO: should pass the product details, so it can be showed in the cart
 		}
 
 		rows.Close()
+
+		tmpl := template.Must(template.ParseFiles("./views/layout.html", "./views/cart.html"))
+		tmpl.Execute(w, cartItems)
 	}
 }
