@@ -1,0 +1,10 @@
+{{define "main"}}
+<h1>{{.Name}}</h1>
+
+<div>{{.Price}}</div>
+
+<form method="POST" action="/add-to-cart">
+	<input type="hidden" name="id" value="{{.ID}}" />
+	<button>Add to cart</button>
+</form>
+{{end}}
